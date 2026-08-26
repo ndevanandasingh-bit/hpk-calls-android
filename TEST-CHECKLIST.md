@@ -1,0 +1,22 @@
+# HPK Calls Android V2.0.0 Test Checklist
+
+- [ ] App installs and opens.
+- [ ] Notification permission is granted.
+- [ ] Microphone permission is granted on first call.
+- [ ] Camera permission is granted when video is used.
+- [ ] Existing HPK web interface loads through HTTPS.
+- [ ] HPK User ID is created/preserved.
+- [ ] Persistent "Direct calls ready" notification appears after identity sync.
+- [ ] Phone A can call Phone B using exact HPK User ID.
+- [ ] Phone B receives a native incoming call notification while HPK Calls is in background.
+- [ ] Native ringtone is clearly audible at Android ringer volume.
+- [ ] Native vibration occurs.
+- [ ] Answer opens the call and connects audio.
+- [ ] Decline stops the ringing and informs the caller through server state.
+- [ ] Incoming call times out after about 45 seconds when not answered.
+- [ ] End Call works from either phone.
+- [ ] Quick Connect share opens the Android share sheet.
+- [ ] Voice call can use earpiece/speaker routing.
+- [ ] Video call can access camera.
+- [ ] Direct calling recovers after briefly changing Wi-Fi/mobile network.
+- [ ] On Android 14+, full-screen call notification permission is enabled if the phone requires it.
