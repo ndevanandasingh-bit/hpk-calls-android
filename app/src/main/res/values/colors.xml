@@ -1,0 +1,9 @@
+<resources>
+    <color name="hpk_navy">#061426</color>
+    <color name="hpk_navy_2">#0B2440</color>
+    <color name="hpk_blue">#31A9F4</color>
+    <color name="hpk_green">#36D99A</color>
+    <color name="hpk_red">#F25067</color>
+    <color name="hpk_text">#F4F9FF</color>
+    <color name="hpk_muted">#9DB1C7</color>
+</resources>
