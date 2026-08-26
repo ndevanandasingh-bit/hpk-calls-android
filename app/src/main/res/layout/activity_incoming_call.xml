@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="#061426">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:layout_margin="20dp" android:orientation="vertical"
+        android:padding="24dp" android:gravity="center" android:background="@drawable/incoming_panel">
+        <ImageView android:layout_width="88dp" android:layout_height="88dp" android:src="@drawable/hpk_logo"
+            android:contentDescription="HPK" android:layout_marginBottom="18dp" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="INCOMING HPK CALL" android:textColor="#78C8FF" android:textStyle="bold"
+            android:textSize="12sp" android:letterSpacing="0.10" />
+        <TextView android:id="@+id/callerName" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="HPK Caller" android:textColor="@color/hpk_text" android:textStyle="bold"
+            android:textSize="28sp" android:layout_marginTop="10dp" />
+        <TextView android:id="@+id/callMeta" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Voice call" android:textColor="@color/hpk_muted" android:textSize="15sp" android:layout_marginTop="6dp" />
+        <TextView android:id="@+id/callerId" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="HPK User" android:textColor="#CFEAFF" android:textSize="13sp" android:layout_marginTop="9dp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="28dp">
+            <Button android:id="@+id/declineBtn" android:layout_width="0dp" android:layout_height="58dp"
+                android:layout_weight="1" android:layout_marginEnd="7dp" android:text="Decline"
+                android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="16sp" android:background="@drawable/decline_button" />
+            <Button android:id="@+id/answerBtn" android:layout_width="0dp" android:layout_height="58dp"
+                android:layout_weight="1" android:layout_marginStart="7dp" android:text="Answer"
+                android:textColor="#061426" android:textStyle="bold" android:textSize="16sp" android:background="@drawable/answer_button" />
+        </LinearLayout>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Secure internet call • HPK Calls" android:textColor="#7893AC" android:textSize="12sp" android:layout_marginTop="20dp" />
+    </LinearLayout>
+</FrameLayout>
