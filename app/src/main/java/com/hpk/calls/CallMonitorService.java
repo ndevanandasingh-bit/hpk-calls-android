@@ -189,7 +189,7 @@ public class CallMonitorService extends Service {
                 .addAction(new Notification.Action.Builder(R.drawable.ic_call_notification, "Answer", answerPi).build())
                 .setTimeoutAfter(45_000L)
                 .build();
-        n.flags |= Notification.FLAG_INSISTENT | Notification.FLAG_ONGOING;
+        n.flags |= Notification.FLAG_INSISTENT | Notification.FLAG_ONGOING_EVENT;
         NotificationManager nm = getSystemService(NotificationManager.class);
         if (nm != null) nm.notify(notificationId(call.roomId), n);
     }
