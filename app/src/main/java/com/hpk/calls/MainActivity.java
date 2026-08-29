@@ -17,12 +17,15 @@ import android.webkit.PermissionRequest;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.net.http.SslError;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import androidx.webkit.WebViewAssetLoader;
 
 import org.json.JSONObject;
 
@@ -34,6 +37,7 @@ public class MainActivity extends Activity {
     private static final int REQ_NOTIFICATIONS = 502;
     private static final String ACTION_NATIVE_ANSWER = "com.hpk.calls.OPEN_ANSWER";
     private static final String BASE_URL = BuildConfig.HPK_BASE_URL + "/";
+    private static final String LOCAL_APP_URL = "https://appassets.androidplatform.net/assets/web/index.html";
 
     private WebView webView;
     private ProgressBar progress;
@@ -44,6 +48,7 @@ public class MainActivity extends Activity {
     private int autoAnswerAttempts = 0;
     private AudioManager audioManager;
     private boolean nativeSpeakerOn = false;
+    private WebViewAssetLoader assetLoader;
 
     public static Intent answerIntent(Context context, String roomId, String callerName, String callerUserId, String mode, boolean autoAnswer) {
         return new Intent(context, MainActivity.class)
@@ -75,6 +80,10 @@ public class MainActivity extends Activity {
     }
 
     private void configureWebView() {
+        assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -89,10 +98,25 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                if (request != null && request.getUrl() != null &&
+                        "appassets.androidplatform.net".equalsIgnoreCase(request.getUrl().getHost())) {
+                    WebResourceResponse local = assetLoader.shouldInterceptRequest(request.getUrl());
+                    if (local != null) return local;
+                }
+                return super.shouldInterceptRequest(view, request);
+            }
+
+            @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                if (uri != null && "https".equalsIgnoreCase(uri.getScheme()) && "hpk-calls.onrender.com".equalsIgnoreCase(uri.getHost())) {
-                    return false;
+                if (uri == null) return true;
+                if ("https".equalsIgnoreCase(uri.getScheme()) &&
+                        "appassets.androidplatform.net".equalsIgnoreCase(uri.getHost())) return false;
+                if ("https".equalsIgnoreCase(uri.getScheme()) &&
+                        "hpk-calls.onrender.com".equalsIgnoreCase(uri.getHost())) {
+                    view.loadUrl(localAppUrl(uri.getEncodedFragment()));
+                    return true;
                 }
                 try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) {}
                 return true;
@@ -123,13 +147,13 @@ public class MainActivity extends Activity {
 
     private void handleIntent(Intent intent, boolean firstLoad) {
         if (intent == null) {
-            if (firstLoad) webView.loadUrl(BASE_URL + "?native=android-v2");
+            if (firstLoad) webView.loadUrl(localAppUrl(null));
             return;
         }
 
         Uri deep = intent.getData();
         if (deep != null && "https".equalsIgnoreCase(deep.getScheme()) && "hpk-calls.onrender.com".equalsIgnoreCase(deep.getHost())) {
-            webView.loadUrl(deep.toString());
+            webView.loadUrl(localAppUrl(deep.getEncodedFragment()));
             return;
         }
 
@@ -140,13 +164,22 @@ public class MainActivity extends Activity {
             autoAnswerAttempts = 0;
             CallMonitorService.cancelLastIncoming(this);
             if (!pendingRoom.trim().isEmpty()) {
-                String target = BASE_URL + "?native=android-v2#room=" + Uri.encode(pendingRoom) + "&signal=" + Uri.encode(BuildConfig.HPK_BASE_URL);
-                webView.loadUrl(target);
+                String fragment = "room=" + Uri.encode(pendingRoom) + "&signal=" + Uri.encode(BuildConfig.HPK_BASE_URL);
+                webView.loadUrl(localAppUrl(fragment));
                 return;
             }
         }
 
-        if (firstLoad) webView.loadUrl(BASE_URL + "?native=android-v2");
+        if (firstLoad) webView.loadUrl(localAppUrl(null));
+    }
+
+    private String localAppUrl(String fragment) {
+        StringBuilder u = new StringBuilder(LOCAL_APP_URL)
+                .append("?native=android-v21")
+                .append("&signal=").append(Uri.encode(BuildConfig.HPK_BASE_URL))
+                .append("&public=").append(Uri.encode(BASE_URL));
+        if (fragment != null && !fragment.trim().isEmpty()) u.append('#').append(fragment);
+        return u.toString();
     }
 
     private String safeRoom(String room) {
@@ -201,15 +234,15 @@ public class MainActivity extends Activity {
         try {
             JSONObject j = new JSONObject().put("userId", i.userId).put("token", i.token);
             String packed = JSONObject.quote(j.toString());
-            String js = "try{var v=" + packed + ";localStorage.setItem('hpkCallsIdentityV114',v);for(var x=0;x<localStorage.length;x++){var k=localStorage.key(x);if(k&&k.indexOf('hpkCallsIdentity')===0)localStorage.setItem(k,v);}}catch(e){}";
+            String js = "try{var v=" + packed + ";localStorage.setItem('hpkCallsIdentityV114',v);localStorage.setItem('hpkCallsIdentityV115',v);for(var x=0;x<localStorage.length;x++){var k=localStorage.key(x);if(k&&k.indexOf('hpkCallsIdentity')===0)localStorage.setItem(k,v);}}catch(e){}";
             webView.evaluateJavascript(js, null);
         } catch (Exception ignored) {}
     }
 
     private void injectNativeEnhancements() {
         String js = "(function(){try{" +
-                "if(window.__hpkNativeV2)return;window.__hpkNativeV2=true;" +
-                "function sync(){try{var ik='hpkCallsIdentityV114';for(var q=0;q<localStorage.length;q++){var kk=localStorage.key(q);if(kk&&kk.indexOf('hpkCallsIdentity')===0)ik=kk;}var i=JSON.parse(localStorage.getItem(ik)||'null');var n=(document.getElementById('myName')||{}).value||'HPK User';if(i&&i.userId&&i.token)HPKNative.syncIdentity(i.userId,i.token,n);HPKNative.callState((document.body&&document.body.dataset.callState)||'idle');}catch(e){}}" +
+                "if(window.__hpkNativeV21)return;window.__hpkNativeV21=true;" +
+                "function sync(){try{var ik=localStorage.getItem('hpkCallsIdentityV115')?'hpkCallsIdentityV115':'hpkCallsIdentityV114';for(var q=0;q<localStorage.length;q++){var kk=localStorage.key(q);if(kk&&kk.indexOf('hpkCallsIdentity')===0)ik=kk;}var i=JSON.parse(localStorage.getItem(ik)||'null');var n=(document.getElementById('myName')||{}).value||'HPK User';if(i&&i.userId&&i.token)HPKNative.syncIdentity(i.userId,i.token,n);HPKNative.callState((document.body&&document.body.dataset.callState)||'idle');}catch(e){}}" +
                 "sync();setInterval(sync,7000);" +
                 "if(document.body)new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['data-call-state']});" +
                 "navigator.share=function(d){try{HPKNative.share((d&&d.title)||'',(d&&d.text)||'',(d&&d.url)||'');return Promise.resolve();}catch(e){return Promise.reject(e);}};navigator.canShare=function(){return true;};" +
