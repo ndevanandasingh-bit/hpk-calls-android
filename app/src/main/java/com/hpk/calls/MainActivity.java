@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.webkit.PermissionRequest;
 import android.webkit.SslErrorHandler;
@@ -67,6 +68,7 @@ public class MainActivity extends Activity {
         audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         webView = findViewById(R.id.webView);
         progress = findViewById(R.id.progress);
+        applySystemBarInsets();
         configureWebView();
         requestNotificationPermissionIfNeeded();
         handleIntent(getIntent(), true);
@@ -77,6 +79,26 @@ public class MainActivity extends Activity {
         super.onNewIntent(intent);
         setIntent(intent);
         handleIntent(intent, false);
+    }
+
+    /**
+     * Android 15+ enforces edge-to-edge for apps targeting API 35.
+     * Keep the WebView below the status bar / display cutout so the HPK
+     * header never sits underneath the clock, network or battery icons.
+     */
+    private void applySystemBarInsets() {
+        if (Build.VERSION.SDK_INT < 35) return;
+        final View container = (View) webView.getParent();
+        if (container == null) return;
+
+        container.setOnApplyWindowInsetsListener((v, insets) -> {
+            android.graphics.Insets topInsets = insets.getInsets(
+                    WindowInsets.Type.statusBars() | WindowInsets.Type.displayCutout());
+            int safeTop = Math.max(0, topInsets.top);
+            v.setPadding(v.getPaddingLeft(), safeTop, v.getPaddingRight(), v.getPaddingBottom());
+            return insets;
+        });
+        container.requestApplyInsets();
     }
 
     private void configureWebView() {
